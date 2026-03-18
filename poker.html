@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+<meta charset="UTF-8">
+<title>Poker Advisor</title>
+<style>
+body {
+  font-family: Arial;
+  direction: rtl;
+  background: #0f172a;
+  color: white;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+}
+
+.box {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+h1 {
+  text-align: center;
+}
+
+.cards {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.card {
+  background: #334155;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.card:hover {
+  background: #475569;
+}
+
+.selected {
+  background: #22c55e !important;
+}
+
+button {
+  padding: 10px 16px;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.strong { background: #065f46; }
+.medium { background: #92400e; }
+.weak { background: #7f1d1d; }
+
+.section {
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+<h1>יועץ יד פתיחה בפוקר</h1>
+
+<div class="cards" id="cards"></div>
+
+<button onclick="reset()">איפוס</button>
+<button onclick="check()">בדוק</button>
+
+<div id="result" class="result" style="display:none;"></div>
+</div>
+
+<script>
+const ranks = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+const suits = ["♠","♥","♦","♣"];
+
+let selected = [];
+
+const container = document.getElementById("cards");
+
+ranks.forEach(r=>{
+  suits.forEach(s=>{
+    const div = document.createElement("div");
+    div.className="card";
+    div.innerText=r+s;
+    div.onclick=()=>{
+      if(selected.includes(r+s)){
+        selected = selected.filter(c=>c!==r+s);
+        div.classList.remove("selected");
+      } else {
+        if(selected.length<2){
+          selected.push(r+s);
+          div.classList.add("selected");
+        }
+      }
+    };
+    container.appendChild(div);
+  });
+});
+
+function normalize(r1,s1,r2,s2){
+  const order = ["A","K","Q","J","T","9","8","7","6","5","4","3","2"];
+  const suited = s1===s2;
+  const sorted=[r1,r2].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  if(sorted[0]===sorted[1]) return sorted[0]+sorted[1];
+  return sorted[0]+sorted[1]+(suited?"s":"o");
+}
+
+function getAdvice(code){
+  if(code==="AA") return {cat:"חזקה מאוד",percent:"85%",action:"רייס חזק",roth:"לוי מפסיד עם זה"};
+  if(code==="KK") return {cat:"חזקה מאוד",percent:"82%",action:"רייס חזק",roth:"רועי שם הכל ויורד בטבלה"};
+  if(code==="AKs"||code==="AKo") return {cat:"חזקה",percent:"65%",action:"רייס",roth:"אבי צועד איתך לאבדון"};
+  if(code==="72o") return {cat:"חלשה",percent:"34%",action:"פולד",roth:"גיל שם אול אין על זה"};
+
+  if(code.length===2) return {cat:"בינונית",percent:"70%",action:"רייס קטן",roth:"דדי שם את הבית על היד הזאת"};
+
+  if(code.endsWith("s")) return {cat:"בינונית",percent:"55%",action:"השוואה",roth:"שחקן רגוע נכנס בזה"};
+
+  return {cat:"חלשה",percent:"45%",action:"פולד",roth:"עדיף לברוח"};
+}
+
+function getClass(cat){
+  if(cat.includes("חזקה")) return "result strong";
+  if(cat.includes("בינונית")) return "result medium";
+  return "result weak";
+}
+
+function check(){
+  if(selected.length!==2){
+    alert("בחר 2 קלפים");
+    return;
+  }
+
+  const r1=selected[0][0];
+  const s1=selected[0][1];
+  const r2=selected[1][0];
+  const s2=selected[1][1];
+
+  const code = normalize(r1,s1,r2,s2);
+  const data = getAdvice(code);
+
+  const result=document.getElementById("result");
+  result.className=getClass(data.cat);
+  result.style.display="block";
+
+  result.innerHTML=`
+    <div class="section"><b>קלפים:</b> ${selected.join(" , ")}</div>
+    <div class="section"><b>דירוג:</b> ${data.cat}</div>
+    <div class="section"><b>אחוז הצלחה:</b> ${data.percent}</div>
+    <div class="section"><b>המלצה:</b> ${data.action}</div>
+    <div class="section"><b>תיאור מדורגי רוטשטיין:</b> ${data.roth}</div>
+  `;
+}
+
+function reset(){
+  selected=[];
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));
+  document.getElementById("result").style.display="none";
+}
+</script>
+
+</body>
+</html>
